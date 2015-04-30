@@ -3,16 +3,18 @@ namespace SpaceInvaders.GameEngine.Objects
 {
     public class LazerGun : GameObject
     {
-        private int _numberOfLive = 3;
+        // Ostap: зробив byte, бо життя ніколи не будуть "-"  і збереже від багів
+        private byte _numberOfLive = 3;
 
 
         public int NumberOfLives
         {
             get
             {
-                return _numberOfLive;
+                return this._numberOfLive;
             }
         }
+
         #region Constructor
        
         public LazerGun(int x, int y)
@@ -25,39 +27,40 @@ namespace SpaceInvaders.GameEngine.Objects
         #region Methods
         public void MoveRight()
         {
-            this.PosX++;
+            PosX++;
         }
         public void MoveLeft()
         {
-            this.PosX--;
+            PosX--;
         }
 
-        public void Update(KeyPress Key, int endField)
+        public void Update(KeyPress key, int endField)
         {
             if (this.Live)
             {
-                if (Key == KeyPress.Right && this.PosX < endField - 4)
+                if ((key == KeyPress.Right) && (PosX < (endField - 4)))
                 {
-                    this.MoveRight();
+                    MoveRight();
                 }
-                else if (Key == KeyPress.Left && this.PosX > 2)
+                else if ((key == KeyPress.Left) && (PosX > 2))
                 {
-                    this.MoveLeft();
+                    MoveLeft();
                 }
             }
         }                 
         
-        public void isDie()
+        // Ostap: всі методи і проперті з великої літери!
+        public void IsDie()
         {            
-            if (this.Live)
+            if (Live)
             {
-                _numberOfLive--;                
-            }
-            if(_numberOfLive < 1)
-            {
-                this.Live = false;              
+                this._numberOfLive--;                
             }
 
+            if(this._numberOfLive < 1)
+            {
+                Live = false;              
+            }
         }
 
         #endregion

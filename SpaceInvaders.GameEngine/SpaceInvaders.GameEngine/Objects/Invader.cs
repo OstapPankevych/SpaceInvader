@@ -5,31 +5,36 @@ namespace SpaceInvaders.GameEngine.Objects
     public class Invader : GameObject
     {
         #region Field and Properties
-        private int _recall=1; // count how many times we update obj        
+
+        // Ostap: _recall - зробити byte: 1) ніколи не буде від'ємним 2) економиш пам'ять
+        private byte _recall = 1; // count how many times we update obj        
         public int K { get; set; }
         public int EndOfField { get; set; } // use for bullet behavior
         public int Speed { get; set; }
 
-        List<Bullet> _enemyBullet = new List<Bullet>();
+        // Ostap: ти ініціалізуєш _enemyBullet зразу, тому роби readonly!
+        private readonly List<Bullet> _enemyBullet = new List<Bullet>();
 
         public int CanShot 
         { 
-            get { return _enemyBullet.Count; }
+            get { return this._enemyBullet.Count; }
         }
+
         public Bullet EnemyBullet 
         {
-            get { return _enemyBullet[0]; }             
+            get { return this._enemyBullet[0]; }             
         }
 
         #endregion
 
 
         #region Constructor
+
         public Invader(int x, int y, int endOfField, int randomShot)
             : base(x, y)
         {
-            this.EndOfField = endOfField;
-            this.K = randomShot;
+            EndOfField = endOfField;
+            K = randomShot;
             Live = true;
             Speed = 1;
         }
@@ -44,60 +49,61 @@ namespace SpaceInvaders.GameEngine.Objects
         }
 
         public bool Shot(int time)
-         {
-             if (time*0.5%52 == 0)
-             {
-                 return true;
-             }
-             return false;
-         }
+        {
+            if ((time * 0.5) % 52 == 0)
+            {
+                return true;
+            }
+            return false;
+        }
      
         private bool EnemyCanShot()
          {
-             if (K % 7==0 && _recall%7==0 )
-             {
-                 return true;
-             }
-             else if (K % 2 == 0 && _recall % 10 == 0)
-             {
-                 return true;
-             }
-             else if (K % 4 == 0 && _recall % 5 == 0)
-             {
-                 return true;
-             }
-             else if (K % 9 == 0 && _recall % 2 == 0)
-             {
-                 return true;
-             }  
-             return false;
+            if ((K % 7 == 0) && (this._recall % 7 == 0))
+            {
+                return true;
+            }
+            else if ((K % 2 == 0) && (this._recall % 10 == 0))
+            {
+                return true;
+            }
+            else if ((K % 4 == 0) && (this._recall % 5 == 0))
+            {
+                return true;
+            }
+            else if ((K % 9 == 0) && (this._recall % 2 == 0))
+            {
+                return true;
+            }
+
+            return false;
         }
        
         public void Update(int time)
         {
             _recall++;
-            Bullet b = new Bullet(this.PosX,this.PosY,false);
+            Bullet b = new Bullet(PosX, PosY, false);
 
-                if (this.Shot(time) && this.EnemyCanShot() && _enemyBullet.Count == 0)
+                if (Shot(time) && EnemyCanShot() && this._enemyBullet.Count == 0)
                 {
                     b.InsertBull(_enemyBullet);
-                    Bullet.BulletBehavior(_enemyBullet, EndOfField);                            
+                    Bullet.BulletBehavior(this._enemyBullet, EndOfField);                            
                 }
             
-                if (_enemyBullet.Count != 0)
+                if (this._enemyBullet.Count != 0)
                 {
-                    Bullet.BulletBehavior(_enemyBullet, EndOfField);
+                    Bullet.BulletBehavior(this._enemyBullet, EndOfField);
                 }
 
-                if (_recall%Speed==0)
+                if (this._recall % Speed == 0)
                 {
-                    this.Move();
+                    Move();
                 }
             }
 
         public bool IsFirstShot()
         {
-            if (_enemyBullet.Count != 0)
+            if (this._enemyBullet.Count != 0)
             {
                 return true;
             }
@@ -106,7 +112,7 @@ namespace SpaceInvaders.GameEngine.Objects
 
         public Bullet GetEnemyBullet()
         {
-            return _enemyBullet[0];
+            return this._enemyBullet[0];
         }
 
         #endregion

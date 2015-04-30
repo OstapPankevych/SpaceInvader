@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SpaceInvaders.GameEngine;
-using SpaceInvaders.GameEngine.Objects;
-using System.Threading;
 using SpaceInvaders.GameEngine.Logic;
+
 
 namespace SpaceInvaders.ConsoleUI
 {
     class Program
     {
-        
+        // Ostap: добавив клас ProcessingCommand для логічного групування команд з клавіатури
         static void Main(string[] args)
         {
             IDistanceStrategy d = new DistanceStrategy();
@@ -24,7 +19,7 @@ namespace SpaceInvaders.ConsoleUI
                       
             draw.StartScreen();
             game.Init(60, 50, 7, 5);
-            game.InputKey += Press_Key;
+            game.InputKey += ProcessingCommand.PressKey;
 
             while (true)
             {
@@ -33,7 +28,7 @@ namespace SpaceInvaders.ConsoleUI
                     game.Draw -= draw.Render;
                     game.Show -= draw.Show;
                     game.Clear -= Console.Clear;
-                    game.InputKey -= Press_Key;
+                    game.InputKey -= ProcessingCommand.PressKey;
 
                     if (game.Win)
                     {                      
@@ -45,67 +40,7 @@ namespace SpaceInvaders.ConsoleUI
                     }
                 }
             }
-               
         }
-
-        //take user's command
-        #region Statics Method
-
-        private static KeyPress Press_Key() // transformate user`s command 
-        {                      
-            ConsoleKey key = readKey();
-
-            if (key == ConsoleKey.RightArrow)
-            {
-                return KeyPress.Right;
-            }
-            else if (key == ConsoleKey.LeftArrow)
-            {
-                return KeyPress.Left;
-            }
-            else if (key == ConsoleKey.Spacebar)
-            {                      
-                return KeyPress.Shot;
-            }
-            else if (key == ConsoleKey.Escape)
-            {
-                return KeyPress.Pause;
-            }
-            else if (key == ConsoleKey.Enter)
-            {
-                return KeyPress.Restore;
-            }
-            else
-            {
-                return KeyPress.Wait; 
-            }       
-        }                       
-         
-        public static ConsoleKey readKey()
-        {
-            if (Console.KeyAvailable)
-            {
-                ConsoleKey key = Console.ReadKey().Key;
-                ClearKeyBuffer();
-                return key;
-            }
-            return 0;
-        }
-
-        public static void ClearKeyBuffer()
-        {
-            while (Console.KeyAvailable)
-            {
-                Console.ReadKey(true);
-            }
-        }
-
-        #endregion  
-
-
-
-
-
     }
 }
 

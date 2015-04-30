@@ -33,7 +33,7 @@ namespace SpaceInvaders.GameEngine.Objects
         {
             PosX = x;
             PosY = y;            
-            this.Live =true;
+            Live =true;
         }
         #endregion              
           

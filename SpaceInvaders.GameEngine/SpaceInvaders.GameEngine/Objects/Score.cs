@@ -11,12 +11,12 @@ namespace SpaceInvaders.GameEngine.Objects
 
         public Score() 
         {            
-            _score = 0;
+            this._score = 0;
         }
 
         public void AddScore(int x)
         {
-            _score += x;
+            this._score += x;
         }
                
     }

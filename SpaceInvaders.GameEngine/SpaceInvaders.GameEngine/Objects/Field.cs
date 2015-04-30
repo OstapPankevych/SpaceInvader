@@ -11,8 +11,6 @@ namespace SpaceInvaders.GameEngine
     {
         public Field(int x, int y)
             : base(x, y)
-        { }
-
-               
+        { }       
     }
 }

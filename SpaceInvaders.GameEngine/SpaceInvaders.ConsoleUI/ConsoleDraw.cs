@@ -33,19 +33,19 @@ namespace SpaceInvaders.ConsoleUI
         { 
             if(obj is Field)
             {
-                this.RenderField((Field)obj);
+                RenderField((Field)obj);
             }
             else if (obj is LazerGun)
             {
-                this.RenderGun((LazerGun)obj);
+                RenderGun((LazerGun)obj);
             }
             else if (obj is Invader)
             {
-                this.RenderInvader((Invader)obj);
+                RenderInvader((Invader)obj);
             }
             else
             {
-                this.RenderBullet((Bullet)obj);
+                RenderBullet((Bullet)obj);
             }        
         }
 

@@ -2,10 +2,9 @@
 using SpaceInvaders.GameEngine.Objects;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
+using SpaceInvaders.GameEngine.Logic.Exceptions;
+
 
 namespace SpaceInvaders.GameEngine
 {
@@ -30,19 +29,20 @@ namespace SpaceInvaders.GameEngine
     {
         #region Fields
         
+        // Ostap: добавив модифікатори доступу "private", зробив поля readonly
             private const int _pause = 100;
             private readonly IDistanceStrategy _distanceStrategy;   
 
             private int _count=0;
             private int _enemy_posx;
             private int _enemy_posy;
-            private Timer _timer;                           
+            private readonly Timer _timer;                           
                          
-            List<Bullet> _gunBulletList = new List<Bullet>();
-            Invader[,] _invadersArray;
-            Score _score = new Score();
-            LazerGun _gun;
-            Field _playground;
+            private readonly List<Bullet> _gunBulletList = new List<Bullet>();
+            private Invader[,] _invadersArray;
+            private readonly Score _score = new Score();
+            private LazerGun _gun;
+            private Field _playground;
 
         #endregion
 
@@ -54,7 +54,7 @@ namespace SpaceInvaders.GameEngine
         { 
             get 
             { 
-                return _score.score;
+                return this._score.score;
             }
         }
         public Status GameStatus { get; private set; }
@@ -64,10 +64,11 @@ namespace SpaceInvaders.GameEngine
         
         #region Events
 
-        public event Action<GameObject> Draw;          
-        public event Action<Score> Show;
-        public event Action Clear;
-        public event Func<KeyPress> InputKey;
+        // Ostap: можна івенти Action зразу ініціалізувати, щоб потім на null не провіряти постійно
+        public event Action<GameObject> Draw = delegate { };
+        public event Action<Score> Show = delegate { };
+        public event Action Clear = delegate { };
+        public event Func<KeyPress> InputKey = delegate { return KeyPress.Wait; };
 
         #endregion
         
@@ -76,70 +77,62 @@ namespace SpaceInvaders.GameEngine
             IsExit = false;
             this._distanceStrategy = distanceStrategy;
             GameStatus = Status.IsNeedInitialize;
-            _timer = new Timer(100);
-            _timer.Elapsed += GameUpdate; 
+            this._timer = new Timer(100);
+            this._timer.Elapsed += GameUpdate; 
         }
 
+        // Ostap: заведи свій Exception: ApplicationException, так буде легше дебажити
         public void Init(int x, int y, int pos_x, int pos_y)
         {
-            if (x<=0 || y<=0 || pos_x<=0 || pos_y<=0 || pos_x>=x/6 || pos_y>=y/6 || y<pos_y+20)
+            if ((x <= 0) || (y <= 0) || (pos_x <= 0) || (pos_y <= 0) || (pos_x >= x/6) || (pos_y >= y/6) || (y < (pos_y + 20)))
             {
-                throw new InvalidOperationException("Game cann't be initialize with this parametrs!");
+                throw new BadInitProcessException("Game cann't be initialize with this parametrs!");
             }
 
             Field Playground = new Field(x, y);  //Define Size of playground
-            LazerGun gun = new LazerGun(x/2, y-1);
-            _gun = gun;
-            _playground = Playground;
+            LazerGun gun = new LazerGun(x/2, y - 1);
+            this._gun = gun;
+            this._playground = Playground;
 
-            _enemy_posx = pos_x;
-            _enemy_posy = pos_y;
+            this._enemy_posx = pos_x;
+            this._enemy_posy = pos_y;
             CreateEnemyArray(x, y);
-            SetEnemy(_invadersArray, y-1, 50, pos_x, pos_y);
+            SetEnemy(this._invadersArray, y - 1, 50, pos_x, pos_y);
 
             GameStatus = Status.IsRuning;
-            _timer.Start();
+            this._timer.Start();
         }
 
         #region Helpers
         
         public void OnDraw(GameObject gameObj)
         {
-            if (this.Draw != null)
+            if (Draw != null)
             {
-                this.Draw(gameObj);
+                Draw(gameObj);
             }
         }
 
         public void OnShow(Score sc)
         {
-            if (this.Show != null)
-            {
-                this.Show(sc);
-            }
+            Show(sc);
         }
 
         public void OnClear() 
         {
-            if (this.Clear != null)
-            {
-                this.Clear();
-            }
+
+            Clear();
         }
 
         public KeyPress OnInputKey()
         {
-            if (this.InputKey != null)
-            {
-              return this.InputKey();                
-            }
 
-            return KeyPress.Wait;
+            return this.InputKey();                
         }
 
         public void UpdScore(int number)
         {
-            _score.AddScore(number);
+            this._score.AddScore(number);
             
         }
 
@@ -148,7 +141,7 @@ namespace SpaceInvaders.GameEngine
 
             int i = x / 10;
             int j;
-            if (y / 8 < 3)
+            if ((y / 8) < 3)
             {
                 j = y / 8;
             }
@@ -158,31 +151,31 @@ namespace SpaceInvaders.GameEngine
             }
 
             #region Validation
-            if (i <= 0 && j <= 0)
+
+            if ((i <= 0) && (j <= 0))
             {
-                throw new InvalidOperationException("Array cann't be initialize with this parametrs!");
+                throw new BadCreateEnemyException("Array can't be initialize with this parametrs!");
             }
 
             #endregion
 
-            _invadersArray = new Invader[i, j];         
+            this._invadersArray = new Invader[i, j];         
         }     
 
         public void TryExitGame()
         {
-            if (!this._gun.Live || _count > 5)
+            if (!(this._gun.Live) || (this._count > 5))
             {
-                this.IsExit = true;
+                IsExit = true;
                 GameStatus = Status.IsExit;
-                return;
             }
         }
 
         public void TryChangeLevel()
         {
-            if (this.Level())
+            if (Level())
             {
-                _count++;
+                this._count++;
                 NextLevel(_count);
             }
         }
@@ -191,13 +184,12 @@ namespace SpaceInvaders.GameEngine
         {
             #region Validation
 
-            if (GameStatus != Status.IsRuning && GameStatus != Status.IsPaused)
+            if ((GameStatus != Status.IsRuning) && (GameStatus != Status.IsPaused))
             {
-                throw new InvalidOperationException("Game can`t be paused");
+                throw new PauseException();
             }
-            
 
-            #endregion
+            #endregion Validation
 
             GameStatus = Status.IsPaused;         
         }
@@ -206,38 +198,38 @@ namespace SpaceInvaders.GameEngine
         {
             #region Validation
 
-            if (GameStatus != Status.IsPaused && GameStatus != Status.IsRuning)
+            if ((GameStatus != Status.IsPaused) && (GameStatus != Status.IsRuning))
             {
-                throw new InvalidOperationException("Not paused game can`t be restored");
+                throw new RestoreException();
             }
 
-            #endregion
+            #endregion Validation
 
             GameStatus = Status.IsRuning;                      
         }
 
         public void UpdatePlayer(KeyPress key)
         {
-            Bullet bull = new Bullet(_gun.PosX, _gun.PosY, true);
+            Bullet bull = new Bullet(this._gun.PosX, this._gun.PosY, true);
 
             if (key == KeyPress.Shot) 
             {
                 bull.InsertBull(_gunBulletList);
             }
 
-            _gun.Update(key, _playground.PosX);                                                              
-            Bullet.BulletBehavior(_gunBulletList,0);  
+            this._gun.Update(key, this._playground.PosX);                                                              
+            Bullet.BulletBehavior(this._gunBulletList,0);  
         }
 
         public void UpdateEnemy(int time)
         {
-            for (var i = 0; i < _invadersArray.GetLength(0); i++)
+            for (var i = 0; i < this._invadersArray.GetLength(0); i++)
             {
-                for (var j = 0; j < _invadersArray.GetLength(1); j++)
+                for (var j = 0; j < this._invadersArray.GetLength(1); j++)
                 {
-                    if (_invadersArray[i, j].Live)
+                    if (this._invadersArray[i, j].Live)
                     {
-                        _invadersArray[i, j].Update(time);
+                        this._invadersArray[i, j].Update(time);
                     }
                 }
             }
@@ -264,24 +256,24 @@ namespace SpaceInvaders.GameEngine
 
         private bool Level()
         {
-            int Count = 0;
-            for (var i = 0; i < _invadersArray.GetLength(0); i++)
+            int count = 0;
+            for (var i = 0; i < this._invadersArray.GetLength(0); i++)
             {
-                for (var j = 0; j < _invadersArray.GetLength(1); j++)
+                for (var j = 0; j < this._invadersArray.GetLength(1); j++)
                 {
-                    if (_invadersArray[i, j].Live)
+                    if (this._invadersArray[i, j].Live)
                     {
-                        Count++;
+                        count++;
                     }
                 }
-
             }
-            if (Count == 0)
+
+            if (count == 0)
             {
                 return true;
             }
-            return false;
 
+            return false;
         }
 
         private void NextLevel(int levelNumber)
@@ -289,40 +281,45 @@ namespace SpaceInvaders.GameEngine
             switch (levelNumber)
             {
                 case (1):
-                    this.HidePlayerBullet();
-                    SetEnemy(_invadersArray, _gun.PosY, 35, _enemy_posx, _enemy_posy + 3);
+                    Level(35, 3);
                     break;
 
                 case (2):
-                    this.HidePlayerBullet();
-                    SetEnemy(_invadersArray, _gun.PosY, 25, _enemy_posx, _enemy_posy + 7);
+                    Level(25, 7);
                     break;
 
                 case (3):
-                    this.HidePlayerBullet();
-                    SetEnemy(_invadersArray, _gun.PosY, 20, _enemy_posx, _enemy_posy + 9);
+                    Level(20, 9);
                     break;
 
                 case (4):
-                    this.HidePlayerBullet();
-                    SetEnemy(_invadersArray, _gun.PosY, 10, _enemy_posx, _enemy_posy + 12);
+                    Level(10, 12);
                     break;
 
                 case (5):
-                    this.HidePlayerBullet();
-                    SetEnemy(_invadersArray, _gun.PosY, 5, _enemy_posx, _enemy_posy + 15);
+                    Level(5, 15);
                     break;
+
                 default:
+                {
                     IsExit = true;
                     Win = true;
                     GameStatus = Status.IsExit;
                     break;
+                }
             }
+        }
+
+        // Ostap: створи приватну функцію для твоїх levelNumber
+        private void Level(int speed, int addToPos_y)
+        {
+            HidePlayerBullet();
+            SetEnemy(this._invadersArray, this._gun.PosY, speed, this._enemy_posx, this._enemy_posy + addToPos_y); 
         }
 
         private void HidePlayerBullet()
         {
-            _gunBulletList.RemoveAll(b => b.Live == true);
+            this._gunBulletList.RemoveAll(b => b.Live == true);
         }
 
         private static long GetCurrentTime()
@@ -336,19 +333,21 @@ namespace SpaceInvaders.GameEngine
         public void GameUpdate(object source, ElapsedEventArgs e)
         {
             Key = OnInputKey();
+
             if (Key == KeyPress.Pause)
             {
-                this.Pause();
+                Pause();
             }
             else if (Key == KeyPress.Restore)
             {
-                this.Restore();               
+                Restore();               
             }
             else
             {
-                this.Update(Key);
+                Update(Key);
             }
-           this.Render();
+
+            this.Render();
         }
              
         public void Update(KeyPress key)  
@@ -362,8 +361,8 @@ namespace SpaceInvaders.GameEngine
 
                 #region Update objects
 
-                this.UpdatePlayer(key);
-                this.UpdateEnemy((int)Current);
+                UpdatePlayer(key);
+                UpdateEnemy((int)Current);
 
                 #endregion
 
@@ -374,32 +373,32 @@ namespace SpaceInvaders.GameEngine
         #region Graphic part
 
         public void Render()  
-    {
+        {
             OnClear();
-            OnDraw(_playground);
-            OnDraw(_gun);              
+            OnDraw(this._playground);
+            OnDraw(this._gun);              
                                                 
-            for (var i = 0; i < _gunBulletList.Count; i++)
+            for (var i = 0; i < this._gunBulletList.Count; i++)
             {
-                OnDraw(_gunBulletList[i]);   //draw LazerGun`s bullet   
-            }                                                              
-  
-            for (var i = 0; i < _invadersArray.GetLength(0); i++)
+                OnDraw(this._gunBulletList[i]);   //draw LazerGun`s bullet   
+            }
+
+            for (var i = 0; i < this._invadersArray.GetLength(0); i++)
             {
-                for (var j = 0; j < _invadersArray.GetLength(1); j++)
+                for (var j = 0; j < this._invadersArray.GetLength(1); j++)
                 {
-                    if (_invadersArray[i, j].Live)
+                    if (this._invadersArray[i, j].Live)
                     {
-                        OnDraw(_invadersArray[i, j]);
-                   
-                        if (_invadersArray[i, j].IsFirstShot())
+                        OnDraw(this._invadersArray[i, j]);
+
+                        if (this._invadersArray[i, j].IsFirstShot())
                         {
-                            OnDraw(_invadersArray[i, j].GetEnemyBullet());  // draw Invader`s bullet                             
+                            OnDraw(this._invadersArray[i, j].GetEnemyBullet());  // draw Invader`s bullet                             
                         }
                     }
                 }
             }
-            OnShow(_score);               
+            OnShow(this._score);               
     }
 
         #endregion
@@ -408,14 +407,14 @@ namespace SpaceInvaders.GameEngine
 
         public void FindCollision()
         {
-            for (var i = 0; i < _invadersArray.GetLength(0); i++)
+            for (var i = 0; i < this._invadersArray.GetLength(0); i++)
             {
-                for (var j = _invadersArray.GetLength(1) - 1; j >= 0; j--)
+                for (var j = this._invadersArray.GetLength(1) - 1; j >= 0; j--)
                 {
-                    if (_invadersArray[i, j].Live)
+                    if (this._invadersArray[i, j].Live)
                     {
-                        CollisionLazerGun(_invadersArray, i, j,_gunBulletList);
-                        CollisionInvader(_invadersArray, i, j, _gun);
+                        CollisionLazerGun(this._invadersArray, i, j, this._gunBulletList);
+                        CollisionInvader(this._invadersArray, i, j, this._gun);
                     }
                 }
             }
@@ -423,50 +422,48 @@ namespace SpaceInvaders.GameEngine
 
         public bool isCollision(GameObject striker, GameObject receiver)
         {
-            return ((_distanceStrategy.GetDistance(striker, receiver)) <= 0);
+            return ((this._distanceStrategy.GetDistance(striker, receiver)) <= 0);
         }
 
 
         public bool InvaderWin(GameObject obj1, GameObject obj2)
         {
             int k = obj2.PosY - obj1.PosY;
+
             if (k <= 1)
             {
                 return true;
             }
+
             return false;
         }
 
-        public void CollisionInvader(Invader[,] Enemy, int i, int j, LazerGun gun)
+        public void CollisionInvader(Invader[,] enemy, int i, int j, LazerGun gun)
         {
-
-            if (InvaderWin(Enemy[i, j], gun))  // when Invader win
+            if (InvaderWin(enemy[i, j], gun))  // when Invader win
             {
                 gun.Live = false;
             }
 
-
-            if (Enemy[i, j].CanShot != 0)
+            if (enemy[i, j].CanShot != 0)
             {
 
-                if (isCollision(Enemy[i, j].EnemyBullet, gun))
+                if (isCollision(enemy[i, j].EnemyBullet, gun))
                 {
-                    gun.isDie();
+                    gun.IsDie();
                 }
             }
-
         }
 
 
-        public void CollisionLazerGun( Invader[,] Enemy, int i, int j, List<Bullet> gun_bullet)
+        public void CollisionLazerGun( Invader[,] enemy, int i, int j, List<Bullet> gun_bullet)
         {
             for (int b = 0; b < gun_bullet.Count; b++)
             {
-
-                if (isCollision(Enemy[i, j], gun_bullet[b]))  // when LazerGun kill an Invader
+                if (isCollision(enemy[i, j], gun_bullet[b]))  // when LazerGun kill an Invader
                 {
                     _gunBulletList.Remove(gun_bullet[b]);
-                    Enemy[i, j].Live = false;
+                    enemy[i, j].Live = false;
                     if (j == 2)
                     {
                         UpdScore(50);

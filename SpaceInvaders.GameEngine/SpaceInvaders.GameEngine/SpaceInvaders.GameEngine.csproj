@@ -40,6 +40,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Logic\DistanceStrategy.cs" />
+    <Compile Include="Logic\Exceptions\BadCreateEnemyException.cs" />
+    <Compile Include="Logic\Exceptions\BadInitProcessException.cs" />
+    <Compile Include="Logic\Exceptions\PauseException.cs" />
+    <Compile Include="Logic\Exceptions\RestoreException.cs" />
     <Compile Include="Logic\IDistanceStrategy.cs" />
     <Compile Include="Objects\Base\IGameObject.cs" />
     <Compile Include="Objects\Field.cs" />
